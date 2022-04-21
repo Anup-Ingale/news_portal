@@ -1,4 +1,5 @@
 import requests,json
+from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.shortcuts import render
 from newsdataapi import NewsDataApiClient
 
@@ -20,7 +21,15 @@ def home(request):
         api_key   = 'baa7bb6a65144a35867128e1eb31dac0'
         news_obj  = requests.get(f'https://newsapi.org/v2/everything?apiKey={api_key}&q=bitcoin')
         news_data = json.loads(news_obj.content)
+        page      = request.GET.get('page', 1)
+        paginator = Paginator(news_data['articles'], 6)
+        try:
+            news_data = paginator.page(page)
+        except PageNotAnInteger:
+            news_data = paginator.page(1)
+        except EmptyPage:
+            news_data = paginator.page(paginator.num_pages)
     except Exception as e:
         print(e)
         news_data = []
-    return render(request, 'home/home.html',{'news_data': news_data['articles']})
+    return render(request, 'home/home.html',{'news_data': news_data})
